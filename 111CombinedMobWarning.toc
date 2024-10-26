@@ -3,9 +3,9 @@
 ## X-Min-Interface-Classic: 11403
 ## X-Min-Interface-BCC: 20504
 ## X-Min-Interface-Wrath: 30402
-## Title: 111 Mobby Warning
+## Title: 111 Combined Mobby Warning
 ## Notes: Warns you about danger
 ## Author: BigBoy69
-## Version: 5.5.2
+## Version: 5.5.3
 ## DefaultState: Enabled
-MobbyWarning.lua
+CombinedMobWarning.lua
