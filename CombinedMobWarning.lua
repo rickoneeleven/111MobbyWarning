@@ -215,26 +215,39 @@ end
 
 local function createSettingsFrame()
     local settingsFrame = CreateFrame("Frame", "EnhancedWarningSettingsFrame", UIParent, "BackdropTemplate")
-    settingsFrame:SetSize(300, 200)
+    settingsFrame:SetSize(340, 245)
     settingsFrame:SetPoint("CENTER")
+    settingsFrame:SetFrameStrata("DIALOG")
+    settingsFrame:SetClampedToScreen(true)
     settingsFrame:SetMovable(true)
     settingsFrame:EnableMouse(true)
     settingsFrame:Hide()
 
     settingsFrame:SetBackdrop({
-        bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+        bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
         edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
         tile = true,
         tileSize = 16,
         edgeSize = 16,
         insets = { left = 4, right = 4, top = 4, bottom = 4 }
     })
-    settingsFrame:SetBackdropColor(0, 0, 0, 0.9)
+    settingsFrame:SetBackdropColor(0.03, 0.03, 0.03, 0.95)
 
-    local header = CreateFrame("Frame", nil, settingsFrame)
-    header:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 8, -8)
-    header:SetPoint("TOPRIGHT", settingsFrame, "TOPRIGHT", -8, -8)
-    header:SetHeight(34)
+    local header = CreateFrame("Frame", nil, settingsFrame, "BackdropTemplate")
+    header:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 12, -12)
+    header:SetPoint("TOPRIGHT", settingsFrame, "TOPRIGHT", -12, -12)
+    header:SetHeight(40)
+    header:SetFrameLevel(settingsFrame:GetFrameLevel() + 5)
+    header:SetBackdrop({
+        bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true,
+        tileSize = 16,
+        edgeSize = 12,
+        insets = { left = 2, right = 2, top = 2, bottom = 2 }
+    })
+    header:SetBackdropColor(0.12, 0.10, 0.06, 0.96)
+    header:SetBackdropBorderColor(0.82, 0.68, 0.28, 0.95)
     header:EnableMouse(true)
     header:RegisterForDrag("LeftButton")
     header:SetScript("OnDragStart", function()
@@ -244,34 +257,59 @@ local function createSettingsFrame()
         settingsFrame:StopMovingOrSizing()
     end)
 
-    local headerBg = header:CreateTexture(nil, "BACKGROUND")
-    headerBg:SetAllPoints(true)
-    headerBg:SetColorTexture(0.1, 0.1, 0.1, 0.75)
+    local headerAccent = header:CreateTexture(nil, "OVERLAY")
+    headerAccent:SetPoint("BOTTOMLEFT", header, "BOTTOMLEFT", 1, 1)
+    headerAccent:SetPoint("BOTTOMRIGHT", header, "BOTTOMRIGHT", -1, 1)
+    headerAccent:SetHeight(1)
+    headerAccent:SetColorTexture(0.95, 0.8, 0.35, 0.8)
 
-    local closeButton = CreateFrame("Button", nil, settingsFrame, "UIPanelCloseButton")
-    closeButton:SetPoint("TOPRIGHT", settingsFrame, "TOPRIGHT", -4, -4)
+    local closeButton = CreateFrame("Button", nil, header, "UIPanelCloseButton")
+    closeButton:SetPoint("RIGHT", header, "RIGHT", 0, 0)
     closeButton:SetScript("OnClick", function()
         settingsFrame:Hide()
     end)
 
-    settingsFrame.title = settingsFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    settingsFrame.title:SetPoint("CENTER", header, "CENTER", 0, 0)
+    settingsFrame.title = header:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    settingsFrame.title:SetPoint("CENTER", header, "CENTER", -6, 0)
     settingsFrame.title:SetText("Enhanced Warning")
 
-    local slider = CreateFrame("Slider", "EnhancedWarningLevelDiffSlider", settingsFrame, "OptionsSliderTemplate")
-    slider:SetPoint("TOP", settingsFrame, "TOP", 0, -50)
+    local subtitle = header:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    subtitle:SetPoint("BOTTOMLEFT", header, "BOTTOMLEFT", 8, 3)
+    subtitle:SetText("Drag this bar to move")
+
+    local content = CreateFrame("Frame", nil, settingsFrame, "BackdropTemplate")
+    content:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 16, -62)
+    content:SetPoint("TOPRIGHT", settingsFrame, "TOPRIGHT", -16, -62)
+    content:SetPoint("BOTTOM", settingsFrame, "BOTTOM", 0, 58)
+    content:SetBackdrop({
+        bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true,
+        tileSize = 16,
+        edgeSize = 10,
+        insets = { left = 2, right = 2, top = 2, bottom = 2 }
+    })
+    content:SetBackdropColor(0.08, 0.08, 0.08, 0.92)
+    content:SetBackdropBorderColor(0.45, 0.45, 0.45, 0.65)
+
+    local slider = CreateFrame("Slider", "EnhancedWarningLevelDiffSlider", content, "OptionsSliderTemplate")
+    slider:SetPoint("TOP", content, "TOP", 0, -24)
     slider:SetMinMaxValues(1, 10)
     slider:SetValueStep(1)
     slider:SetObeyStepOnDrag(true)
-    slider:SetWidth(220)
+    slider:SetWidth(245)
     slider:SetValue(db.levelDiffThreshold)
     _G[slider:GetName() .. "Low"]:SetText("1")
     _G[slider:GetName() .. "High"]:SetText("10")
     _G[slider:GetName() .. "Text"]:SetText("Min Level Diff To Alert")
 
-    local valueText = settingsFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    local valueText = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     valueText:SetPoint("TOP", slider, "BOTTOM", 0, -8)
     valueText:SetText(string.format("Current: +%d", db.levelDiffThreshold))
+
+    local helperText = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    helperText:SetPoint("TOP", valueText, "BOTTOM", 0, -8)
+    helperText:SetText("Alert when a mob is this many levels above you.")
 
     slider:SetScript("OnValueChanged", function(self, value)
         local rounded = math.floor(value + 0.5)
@@ -280,25 +318,32 @@ local function createSettingsFrame()
         valueText:SetText(string.format("Current: +%d", rounded))
     end)
 
+    local divider = settingsFrame:CreateTexture(nil, "ARTWORK")
+    divider:SetPoint("BOTTOMLEFT", settingsFrame, "BOTTOMLEFT", 18, 52)
+    divider:SetPoint("BOTTOMRIGHT", settingsFrame, "BOTTOMRIGHT", -18, 52)
+    divider:SetHeight(1)
+    divider:SetColorTexture(0.65, 0.65, 0.65, 0.5)
+
     local sleepButton = CreateFrame("Button", nil, settingsFrame, "UIPanelButtonTemplate")
-    sleepButton:SetSize(120, 24)
-    sleepButton:SetPoint("BOTTOMLEFT", settingsFrame, "BOTTOMLEFT", 18, 20)
+    sleepButton:SetSize(130, 24)
+    sleepButton:SetPoint("BOTTOMLEFT", settingsFrame, "BOTTOMLEFT", 20, 20)
     sleepButton:SetText("Sleep 2 Min")
     sleepButton:SetScript("OnClick", function()
         sleepFor(120)
     end)
 
     local wakeButton = CreateFrame("Button", nil, settingsFrame, "UIPanelButtonTemplate")
-    wakeButton:SetSize(120, 24)
-    wakeButton:SetPoint("BOTTOMRIGHT", settingsFrame, "BOTTOMRIGHT", -18, 20)
+    wakeButton:SetSize(130, 24)
+    wakeButton:SetPoint("BOTTOMRIGHT", settingsFrame, "BOTTOMRIGHT", -20, 20)
     wakeButton:SetText("Wake Now")
     wakeButton:SetScript("OnClick", function()
         wakeAlerts()
     end)
 
     local sleepStatus = settingsFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    sleepStatus:SetPoint("BOTTOM", settingsFrame, "BOTTOM", 0, 54)
+    sleepStatus:SetPoint("BOTTOM", settingsFrame, "BOTTOM", 0, 58)
     sleepStatus:SetText("Alerts Active")
+    sleepStatus:SetTextColor(0.4, 1.0, 0.4)
 
     settingsFrame:SetScript("OnUpdate", function(self, elapsed)
         self.elapsed = (self.elapsed or 0) + elapsed
@@ -308,8 +353,10 @@ local function createSettingsFrame()
         local remaining = math.floor((db.sleepUntil or 0) - GetTime())
         if remaining > 0 then
             sleepStatus:SetText(string.format("Sleeping: %ds remaining", remaining))
+            sleepStatus:SetTextColor(1.0, 0.82, 0.25)
         else
             sleepStatus:SetText("Alerts Active")
+            sleepStatus:SetTextColor(0.4, 1.0, 0.4)
         end
     end)
 
