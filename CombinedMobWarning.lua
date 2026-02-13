@@ -273,14 +273,10 @@ local function createSettingsFrame()
     settingsFrame.title:SetPoint("CENTER", header, "CENTER", -6, 0)
     settingsFrame.title:SetText("Enhanced Warning")
 
-    local subtitle = header:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    subtitle:SetPoint("BOTTOMLEFT", header, "BOTTOMLEFT", 8, 3)
-    subtitle:SetText("Drag this bar to move")
-
     local content = CreateFrame("Frame", nil, settingsFrame, "BackdropTemplate")
     content:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 16, -62)
     content:SetPoint("TOPRIGHT", settingsFrame, "TOPRIGHT", -16, -62)
-    content:SetPoint("BOTTOM", settingsFrame, "BOTTOM", 0, 58)
+    content:SetPoint("BOTTOM", settingsFrame, "BOTTOM", 0, 66)
     content:SetBackdrop({
         bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
         edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
@@ -318,30 +314,45 @@ local function createSettingsFrame()
         valueText:SetText(string.format("Current: +%d", rounded))
     end)
 
+    local footer = CreateFrame("Frame", nil, settingsFrame, "BackdropTemplate")
+    footer:SetPoint("BOTTOMLEFT", settingsFrame, "BOTTOMLEFT", 16, 14)
+    footer:SetPoint("BOTTOMRIGHT", settingsFrame, "BOTTOMRIGHT", -16, 14)
+    footer:SetHeight(44)
+    footer:SetBackdrop({
+        bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true,
+        tileSize = 16,
+        edgeSize = 10,
+        insets = { left = 2, right = 2, top = 2, bottom = 2 }
+    })
+    footer:SetBackdropColor(0.08, 0.08, 0.08, 0.92)
+    footer:SetBackdropBorderColor(0.45, 0.45, 0.45, 0.65)
+
     local divider = settingsFrame:CreateTexture(nil, "ARTWORK")
-    divider:SetPoint("BOTTOMLEFT", settingsFrame, "BOTTOMLEFT", 18, 52)
-    divider:SetPoint("BOTTOMRIGHT", settingsFrame, "BOTTOMRIGHT", -18, 52)
+    divider:SetPoint("BOTTOMLEFT", footer, "TOPLEFT", 2, 2)
+    divider:SetPoint("BOTTOMRIGHT", footer, "TOPRIGHT", -2, 2)
     divider:SetHeight(1)
     divider:SetColorTexture(0.65, 0.65, 0.65, 0.5)
 
-    local sleepButton = CreateFrame("Button", nil, settingsFrame, "UIPanelButtonTemplate")
+    local sleepButton = CreateFrame("Button", nil, footer, "UIPanelButtonTemplate")
     sleepButton:SetSize(130, 24)
-    sleepButton:SetPoint("BOTTOMLEFT", settingsFrame, "BOTTOMLEFT", 20, 20)
+    sleepButton:SetPoint("BOTTOMLEFT", footer, "BOTTOMLEFT", 8, 8)
     sleepButton:SetText("Sleep 2 Min")
     sleepButton:SetScript("OnClick", function()
         sleepFor(120)
     end)
 
-    local wakeButton = CreateFrame("Button", nil, settingsFrame, "UIPanelButtonTemplate")
+    local wakeButton = CreateFrame("Button", nil, footer, "UIPanelButtonTemplate")
     wakeButton:SetSize(130, 24)
-    wakeButton:SetPoint("BOTTOMRIGHT", settingsFrame, "BOTTOMRIGHT", -20, 20)
+    wakeButton:SetPoint("BOTTOMRIGHT", footer, "BOTTOMRIGHT", -8, 8)
     wakeButton:SetText("Wake Now")
     wakeButton:SetScript("OnClick", function()
         wakeAlerts()
     end)
 
-    local sleepStatus = settingsFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    sleepStatus:SetPoint("BOTTOM", settingsFrame, "BOTTOM", 0, 58)
+    local sleepStatus = footer:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    sleepStatus:SetPoint("BOTTOM", footer, "TOP", 0, 5)
     sleepStatus:SetText("Alerts Active")
     sleepStatus:SetTextColor(0.4, 1.0, 0.4)
 
