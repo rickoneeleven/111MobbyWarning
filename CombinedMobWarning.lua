@@ -219,9 +219,6 @@ local function createSettingsFrame()
     settingsFrame:SetPoint("CENTER")
     settingsFrame:SetMovable(true)
     settingsFrame:EnableMouse(true)
-    settingsFrame:RegisterForDrag("LeftButton")
-    settingsFrame:SetScript("OnDragStart", settingsFrame.StartMoving)
-    settingsFrame:SetScript("OnDragStop", settingsFrame.StopMovingOrSizing)
     settingsFrame:Hide()
 
     settingsFrame:SetBackdrop({
@@ -234,8 +231,31 @@ local function createSettingsFrame()
     })
     settingsFrame:SetBackdropColor(0, 0, 0, 0.9)
 
+    local header = CreateFrame("Frame", nil, settingsFrame)
+    header:SetPoint("TOPLEFT", settingsFrame, "TOPLEFT", 8, -8)
+    header:SetPoint("TOPRIGHT", settingsFrame, "TOPRIGHT", -8, -8)
+    header:SetHeight(34)
+    header:EnableMouse(true)
+    header:RegisterForDrag("LeftButton")
+    header:SetScript("OnDragStart", function()
+        settingsFrame:StartMoving()
+    end)
+    header:SetScript("OnDragStop", function()
+        settingsFrame:StopMovingOrSizing()
+    end)
+
+    local headerBg = header:CreateTexture(nil, "BACKGROUND")
+    headerBg:SetAllPoints(true)
+    headerBg:SetColorTexture(0.1, 0.1, 0.1, 0.75)
+
+    local closeButton = CreateFrame("Button", nil, settingsFrame, "UIPanelCloseButton")
+    closeButton:SetPoint("TOPRIGHT", settingsFrame, "TOPRIGHT", -4, -4)
+    closeButton:SetScript("OnClick", function()
+        settingsFrame:Hide()
+    end)
+
     settingsFrame.title = settingsFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    settingsFrame.title:SetPoint("TOP", settingsFrame, "TOP", 0, -12)
+    settingsFrame.title:SetPoint("CENTER", header, "CENTER", 0, 0)
     settingsFrame.title:SetText("Enhanced Warning")
 
     local slider = CreateFrame("Slider", "EnhancedWarningLevelDiffSlider", settingsFrame, "OptionsSliderTemplate")
@@ -297,8 +317,8 @@ local function createSettingsFrame()
 end
 
 local function createMinimapButton(settingsFrame)
-    local parent = Minimap or MinimapCluster or UIParent
-    local button = CreateFrame("Button", "EnhancedWarningMiniMapButton", parent)
+    if not Minimap then return nil end
+    local button = CreateFrame("Button", "EnhancedWarningMinimapButton", Minimap)
     button:SetSize(31, 31)
     button:SetFrameStrata("HIGH")
     button:SetFrameLevel(8)
