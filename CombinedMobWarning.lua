@@ -112,15 +112,20 @@ local function playThreatBeeps(levelDiff)
     local beepCount = math.max(1, levelDiff or 1)
     beepCount = math.min(beepCount, 10)
 
+    local function playOneBeep()
+        -- forceNoDuplicates=false lets rapid repeated alerts play fully (e.g. +2 => 2 beeps).
+        PlaySound(ALERT_SOUND, "Master", false)
+    end
+
     if C_Timer and C_Timer.After then
         for i = 1, beepCount do
             C_Timer.After((i - 1) * 0.12, function()
-                PlaySound(ALERT_SOUND)
+                playOneBeep()
             end)
         end
     else
         for _ = 1, beepCount do
-            PlaySound(ALERT_SOUND)
+            playOneBeep()
         end
     end
 end
