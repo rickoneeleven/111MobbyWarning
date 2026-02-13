@@ -12,10 +12,47 @@ local settingsFrameRef
 local beepQueue = {}
 local beepNextTime = 0
 local beepToggle = false
--- RAID_WARNING is a long sound; a longer interval makes repeats clearly audible.
-local BEEP_INTERVAL_SECONDS = 1.15
-local BEEP_SOUND_A = ALERT_SOUND
-local BEEP_SOUND_B = ALERT_SOUND
+local BEEP_INTERVAL_SECONDS = 0.33
+
+local function resolveBeepSounds()
+    -- Prefer short, attention-grabbing sounds (not the long RAID_WARNING).
+    local candidates = {
+        SOUNDKIT and SOUNDKIT.ALARM_CLOCK_WARNING_3 or nil,
+        SOUNDKIT and SOUNDKIT.ALARM_CLOCK_WARNING_2 or nil,
+        SOUNDKIT and SOUNDKIT.READY_CHECK or nil,
+        SOUNDKIT and SOUNDKIT.TELL_MESSAGE or nil,
+        SOUNDKIT and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or nil,
+        SOUNDKIT and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF or nil,
+    }
+
+    local first = nil
+    for _, sound in ipairs(candidates) do
+        if sound then
+            first = sound
+            break
+        end
+    end
+
+    local second = nil
+    for _, sound in ipairs(candidates) do
+        if sound and sound ~= first then
+            second = sound
+            break
+        end
+    end
+
+    -- Hard fallback: ensure we always have 2 different sounds available for alternation.
+    if not first then
+        first = SOUNDKIT and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or ALERT_SOUND
+    end
+    if not second or second == first then
+        second = SOUNDKIT and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF or first
+    end
+
+    return first, second
+end
+
+local BEEP_SOUND_A, BEEP_SOUND_B = resolveBeepSounds()
 
 local function atan2(y, x)
     if math.atan2 then
