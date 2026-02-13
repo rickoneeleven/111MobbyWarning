@@ -7,6 +7,8 @@ local lastAlertTime = {
 local TARGET_RECHECK_DELAY = 0.15  -- Retry target check once when unit data is delayed
 local ALERT_SOUND = SOUNDKIT.RAID_WARNING
 local db
+local minimapButton
+local settingsFrameRef
 
 local function atan2(y, x)
     if math.atan2 then
@@ -201,6 +203,7 @@ local function handleNamePlate(unitToken)
 end
 
 local function updateMinimapButtonPosition(button)
+    if not Minimap then return end
     local angle = db.minimapAngle or 225
     local radius = 80
     local radians = math.rad(angle)
@@ -294,13 +297,15 @@ local function createSettingsFrame()
 end
 
 local function createMinimapButton(settingsFrame)
-    local button = CreateFrame("Button", "EnhancedWarningMiniMapButton", Minimap)
+    local parent = Minimap or MinimapCluster or UIParent
+    local button = CreateFrame("Button", "EnhancedWarningMiniMapButton", parent)
     button:SetSize(31, 31)
-    button:SetFrameStrata("MEDIUM")
+    button:SetFrameStrata("HIGH")
+    button:SetFrameLevel(8)
     button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
     button:RegisterForDrag("LeftButton")
 
-    local icon = button:CreateTexture(nil, "BACKGROUND")
+    local icon = button:CreateTexture(nil, "ARTWORK")
     icon:SetSize(18, 18)
     icon:SetPoint("CENTER")
     icon:SetTexture("Interface\\Icons\\Spell_Shadow_DeathScream")
@@ -358,25 +363,24 @@ local function createMinimapButton(settingsFrame)
     end)
 
     updateMinimapButtonPosition(button)
+    button:Show()
+    return button
 end
 
 local function initializeUI()
-    local settingsFrame = createSettingsFrame()
-    createMinimapButton(settingsFrame)
+    settingsFrameRef = createSettingsFrame()
+    minimapButton = createMinimapButton(settingsFrameRef)
 end
 
 -- Register events and handlers
-frame:RegisterEvent("ADDON_LOADED")
+frame:RegisterEvent("PLAYER_LOGIN")
 frame:RegisterEvent("PLAYER_TARGET_CHANGED")
 frame:RegisterEvent("NAME_PLATE_UNIT_ADDED")
 
 frame:SetScript("OnEvent", function(_, event, ...)
-    if event == "ADDON_LOADED" then
-        local addonName = ...
-        if addonName == "111CombinedMobWarning" then
-            initDB()
-            initializeUI()
-        end
+    if event == "PLAYER_LOGIN" then
+        initDB()
+        initializeUI()
     elseif not db then
         return
     elseif event == "PLAYER_TARGET_CHANGED" then
@@ -399,10 +403,22 @@ SlashCmdList["ENHANCEDWARNING"] = function(msg)
         sleepFor(120)
     elseif command == "wake" then
         wakeAlerts()
+    elseif command == "resetbutton" then
+        if not db then
+            print("Enhanced Warning: not initialized yet.")
+            return
+        end
+        db.minimapAngle = 225
+        if minimapButton then
+            updateMinimapButtonPosition(minimapButton)
+            minimapButton:Show()
+        end
+        print("Enhanced Warning: minimap button reset.")
     else
         print("Enhanced Warning commands:")
         print("/ew debug - Toggle debug mode")
         print("/ew sleep - Pause alerts for 2 minutes")
         print("/ew wake - Resume alerts")
+        print("/ew resetbutton - Reset minimap button position")
     end
 end
