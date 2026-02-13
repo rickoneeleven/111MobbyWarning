@@ -6,6 +6,6 @@
 ## Title: 111 Combined Mobby Warning
 ## Notes: Warns you about danger
 ## Author: BigBoy69
-## Version: 5.5.3
+## Version: 5.5.4
 ## DefaultState: Enabled
 CombinedMobWarning.lua

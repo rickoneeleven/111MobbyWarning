@@ -6,6 +6,7 @@ local lastAlertTime = {
     target = 0
 }
 local COOLDOWN_DURATION = 60  -- Cooldown in seconds
+local TARGET_RECHECK_DELAY = 0.15  -- Retry target check once when unit data is delayed
 
 local function debugPrint(message)
     if debugMode == 1 then
@@ -30,6 +31,20 @@ local function checkThreatLevel(unitToken)
         classification = classification,
         isElite = isElite
     }
+end
+
+local function isAttackableNPC(unitToken, sourceLabel)
+    if UnitIsPlayer(unitToken) then
+        debugPrint(sourceLabel .. ": unit is player - ignoring")
+        return false
+    end
+
+    if not UnitCanAttack("player", unitToken) then
+        debugPrint(sourceLabel .. ": unit not attackable - ignoring")
+        return false
+    end
+
+    return true
 end
 
 local function showWarning(unitToken, warningType)
@@ -70,13 +85,22 @@ local function handleTargetChange(self, event, ...)
     
     local target = "target"
     if not UnitExists(target) then return end
-    
-    if UnitIsPlayer(target) or not UnitIsEnemy("player", target) then
-        debugPrint("Target is either a player or not an enemy - ignoring")
-        return
-    end
-    
+
+    if not isAttackableNPC(target, "Target") then return end
+
     showWarning(target, "target")
+
+    -- Sometimes level/classification data is not fully available on first target event.
+    -- Re-check once shortly after targeting to catch valid warnings we might miss.
+    if C_Timer and C_Timer.After then
+        local targetGUID = UnitGUID(target)
+        C_Timer.After(TARGET_RECHECK_DELAY, function()
+            if not UnitExists("target") then return end
+            if UnitGUID("target") ~= targetGUID then return end
+            if not isAttackableNPC("target", "Target recheck") then return end
+            showWarning("target", "target")
+        end)
+    end
 end
 
 local function handleNamePlate(self, event, unitToken)
@@ -86,11 +110,8 @@ local function handleNamePlate(self, event, unitToken)
         return
     end
     
-    if UnitIsPlayer(unitToken) or not UnitIsEnemy("player", unitToken) then
-        debugPrint("Nameplate unit is either a player or not an enemy - ignoring")
-        return
-    end
-    
+    if not isAttackableNPC(unitToken, "Nameplate") then return end
+
     showWarning(unitToken, "nameplate")
 end
 
