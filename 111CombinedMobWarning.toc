@@ -6,6 +6,7 @@
 ## Title: 111 Combined Mobby Warning
 ## Notes: Warns you about danger
 ## Author: BigBoy69
-## Version: 5.5.4
+## Version: 5.6.0
 ## DefaultState: Enabled
+## SavedVariables: CombinedMobWarningDB
 CombinedMobWarning.lua
