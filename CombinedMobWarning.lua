@@ -9,6 +9,13 @@ local ALERT_SOUND = SOUNDKIT.RAID_WARNING
 local db
 local minimapButton
 local settingsFrameRef
+local beepQueue = {}
+local beepNextTime = 0
+local beepToggle = false
+local BEEP_INTERVAL_SECONDS = 0.35
+
+local BEEP_SOUND_A = (SOUNDKIT and (SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.TELL_MESSAGE)) or ALERT_SOUND
+local BEEP_SOUND_B = (SOUNDKIT and (SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF or SOUNDKIT.TELL_MESSAGE)) or ALERT_SOUND
 
 local function atan2(y, x)
     if math.atan2 then
@@ -26,6 +33,14 @@ local function atan2(y, x)
         return -math.pi / 2
     end
     return 0
+end
+
+local function safePlaySound(soundKit, channel, forceNoDuplicates)
+    if not soundKit or not PlaySound then return end
+    local ok = pcall(PlaySound, soundKit, channel, forceNoDuplicates)
+    if not ok then
+        pcall(PlaySound, soundKit, channel)
+    end
 end
 
 local function debugPrint(message)
@@ -111,23 +126,41 @@ end
 local function playThreatBeeps(levelDiff)
     local beepCount = math.max(1, levelDiff or 1)
     beepCount = math.min(beepCount, 10)
+    debugPrint(string.format("Beep enqueue - levelDiff=%s, beepCount=%d", tostring(levelDiff), beepCount))
 
-    local function playOneBeep()
-        -- forceNoDuplicates=false lets rapid repeated alerts play fully (e.g. +2 => 2 beeps).
-        PlaySound(ALERT_SOUND, "Master", false)
+    for _ = 1, beepCount do
+        beepToggle = not beepToggle
+        table.insert(beepQueue, beepToggle and BEEP_SOUND_A or BEEP_SOUND_B)
     end
 
-    if C_Timer and C_Timer.After then
-        for i = 1, beepCount do
-            C_Timer.After((i - 1) * 0.12, function()
-                playOneBeep()
-            end)
-        end
-    else
-        for _ = 1, beepCount do
-            playOneBeep()
-        end
+    if frame:GetScript("OnUpdate") then
+        return
     end
+
+    frame:SetScript("OnUpdate", function()
+        if #beepQueue == 0 then
+            frame:SetScript("OnUpdate", nil)
+            return
+        end
+
+        local now = GetTime()
+        if beepNextTime == 0 then
+            beepNextTime = now
+        end
+
+        if now < beepNextTime then
+            return
+        end
+
+        local soundKit = table.remove(beepQueue, 1)
+        safePlaySound(soundKit, "Master", false)
+        beepNextTime = now + BEEP_INTERVAL_SECONDS
+
+        if #beepQueue == 0 then
+            beepNextTime = 0
+            frame:SetScript("OnUpdate", nil)
+        end
+    end)
 end
 
 local function showWarning(unitToken, warningType)
