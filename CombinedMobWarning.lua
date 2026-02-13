@@ -8,6 +8,24 @@ local TARGET_RECHECK_DELAY = 0.15  -- Retry target check once when unit data is 
 local ALERT_SOUND = SOUNDKIT.RAID_WARNING
 local db
 
+local function atan2(y, x)
+    if math.atan2 then
+        return math.atan2(y, x)
+    end
+    if x > 0 then
+        return math.atan(y / x)
+    elseif x < 0 and y >= 0 then
+        return math.atan(y / x) + math.pi
+    elseif x < 0 and y < 0 then
+        return math.atan(y / x) - math.pi
+    elseif x == 0 and y > 0 then
+        return math.pi / 2
+    elseif x == 0 and y < 0 then
+        return -math.pi / 2
+    end
+    return 0
+end
+
 local function debugPrint(message)
     if debugMode == 1 then
         print("[EnhancedWarning Debug]: " .. message)
@@ -193,7 +211,7 @@ local function updateMinimapButtonPosition(button)
 end
 
 local function createSettingsFrame()
-    local settingsFrame = CreateFrame("Frame", "EnhancedWarningSettingsFrame", UIParent)
+    local settingsFrame = CreateFrame("Frame", "EnhancedWarningSettingsFrame", UIParent, "BackdropTemplate")
     settingsFrame:SetSize(300, 200)
     settingsFrame:SetPoint("CENTER")
     settingsFrame:SetMovable(true)
@@ -313,7 +331,7 @@ local function createMinimapButton(settingsFrame)
             local scale = UIParent:GetEffectiveScale()
             cx = cx / scale
             cy = cy / scale
-            local angle = math.deg(math.atan2(cy - my, cx - mx))
+            local angle = math.deg(atan2(cy - my, cx - mx))
             if angle < 0 then
                 angle = angle + 360
             end
