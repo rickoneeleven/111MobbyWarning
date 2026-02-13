@@ -14,8 +14,38 @@ local beepNextTime = 0
 local beepToggle = false
 local BEEP_INTERVAL_SECONDS = 0.35
 
-local BEEP_SOUND_A = (SOUNDKIT and (SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.TELL_MESSAGE)) or ALERT_SOUND
-local BEEP_SOUND_B = (SOUNDKIT and (SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF or SOUNDKIT.TELL_MESSAGE)) or ALERT_SOUND
+local function resolveBeepSounds()
+    local candidates = {
+        SOUNDKIT and SOUNDKIT.RAID_WARNING or nil,
+        SOUNDKIT and SOUNDKIT.READY_CHECK or nil,
+        SOUNDKIT and SOUNDKIT.ALARM_CLOCK_WARNING_3 or nil,
+        SOUNDKIT and SOUNDKIT.ALARM_CLOCK_WARNING_2 or nil,
+        SOUNDKIT and SOUNDKIT.TELL_MESSAGE or nil,
+        SOUNDKIT and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or nil,
+        SOUNDKIT and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF or nil,
+        ALERT_SOUND,
+    }
+
+    local first = nil
+    for _, sound in ipairs(candidates) do
+        if sound then
+            first = sound
+            break
+        end
+    end
+
+    local second = first
+    for _, sound in ipairs(candidates) do
+        if sound and sound ~= first then
+            second = sound
+            break
+        end
+    end
+
+    return first, second
+end
+
+local BEEP_SOUND_A, BEEP_SOUND_B = resolveBeepSounds()
 
 local function atan2(y, x)
     if math.atan2 then
